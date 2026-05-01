@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi QR Code Print Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --orange: #ff8200;
+      --orange-dark: #e36f00;
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --text: #1d1f24;
+      --muted: #6d7280;
+      --border: #e3e6eb;
+      --shadow: 0 18px 45px rgba(20, 25, 35, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Barlow", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 130, 0, 0.16), transparent 34%),
+        linear-gradient(135deg, #f7f8fb 0%, #eceff4 100%);
+    }
+
+    .app {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.6rem);
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+    }
+
+    .hero p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 680px;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 12px 18px;
+      background: #111318;
+      color: white;
+      border-radius: 999px;
+      font-weight: 700;
+      box-shadow: var(--shadow);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      padding: 26px;
+    }
+
+    .row {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .row-number {
+      font-weight: 800;
+      color: var(--orange);
+    }
+
+    .remove-btn {
+      background: #f1f2f5;
+      color: #333;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      box-shadow: none;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 15px;
+      font: inherit;
+      font-size: 1rem;
+      outline: none;
+      background: white;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 4px rgba(255, 130, 0, 0.16);
+    }
+
+    .field { margin-bottom: 14px; }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      padding: 15px 18px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .primary {
+      background: var(--orange);
+      color: white;
+      box-shadow: 0 12px 25px rgba(255, 130, 0, 0.28);
+    }
+
+    .primary:hover { background: var(--orange-dark); }
+
+    .secondary {
+      background: #111318;
+      color: white;
+    }
+
+    .ghost {
+      background: white;
+      color: #111318;
+      border: 1px solid var(--border);
+    }
+
+    .hint {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .error {
+      color: #b00020;
+      font-weight: 700;
+      margin-top: 14px;
+      min-height: 20px;
+    }
+
+    .preview-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .preview-head h2 {
+      margin: 0;
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+    }
+
+    .count-pill {
+      background: rgba(255, 130, 0, 0.14);
+      color: #9a4c00;
+      font-weight: 800;
+      padding: 8px 12px;
+      border-radius: 999px;
+    }
+
+    #previewGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 18px;
+      min-height: 340px;
+    }
+
+    .qr-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 22px;
+      text-align: center;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+    }
+
+    .qr-card h3 {
+      margin: 0 0 18px;
+      font-size: 1.25rem;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .qr-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 180px;
+    }
+
+    .qr-box img,
+    .qr-box canvas {
+      width: 180px !important;
+      height: 180px !important;
+      display: block;
+    }
+
+    .empty {
+      min-height: 340px;
+      border: 3px dashed #d6dbe3;
+      border-radius: 24px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-weight: 700;
+      text-align: center;
+      padding: 24px;
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 900px) {
+      .hero { display: block; }
+      .badge { display: inline-block; margin-top: 18px; }
+      .grid { grid-template-columns: 1fr; }
+      .buttons { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div>
+        <h1>Multi QR<br>Print Builder</h1>
+        <p>Add multiple names and links, generate QR codes, then print a clean page with all QR codes centered.</p>
+      </div>
+      <div class="badge">Print Ready</div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <div id="inputRows"></div>
+
+        <button class="ghost" style="width:100%;" onclick="addRow()">+ Add Another QR Code</button>
+
+        <div class="buttons">
+          <button class="primary" onclick="generateAllQR()">Generate All</button>
+          <button class="secondary" onclick="printAllQR()">Print All</button>
+        </div>
+
+        <div id="errorMsg" class="error"></div>
+
+        <p class="hint">
+          Add as many QR codes as needed. When printing, only the names and QR codes will appear on the page.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="preview-head">
+          <h2>Preview</h2>
+          <div id="countPill" class="count-pill">0 QR Codes</div>
+        </div>
+        <div id="previewGrid">
+          <div class="empty">Your QR code previews will appear here</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let rowCount = 0;
+    let generatedItems = [];
+
+    function normalizeLink(link) {
+      const trimmed = link.trim();
+      if (!trimmed) return "";
+      if (/^https?:\/\//i.test(trimmed)) return trimmed;
+      return "https://" + trimmed;
+    }
+
+    function isValidUrl(value) {
+      try {
+        const url = new URL(value);
+        return url.protocol === "http:" || url.protocol === "https:";
+      } catch {
+        return false;
+      }
+    }
+
+    function escapeHTML(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function addRow(title = "", link = "") {
+      rowCount++;
+      const inputRows = document.getElementById("inputRows");
+      const row = document.createElement("div");
+      row.className = "row";
+      row.dataset.rowId = rowCount;
+      row.innerHTML = `
+        <div class="row-top">
+          <div class="row-number">QR Code ${rowCount}</div>
+          <button class="remove-btn" onclick="removeRow(this)">Remove</button>
+        </div>
+        <div class="field">
+          <label>Name / Title</label>
+          <input class="title-input" type="text" placeholder="Example: Product Manual" value="${escapeHTML(title)}" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Link</label>
+          <input class="link-input" type="url" placeholder="https://example.com" value="${escapeHTML(link)}" autocomplete="off" />
+        </div>
+      `;
+      inputRows.appendChild(row);
+    }
+
+    function removeRow(button) {
+      const rows = document.querySelectorAll(".row");
+      if (rows.length <= 1) {
+        document.getElementById("errorMsg").textContent = "You need at least one QR code row.";
+        return;
+      }
+      button.closest(".row").remove();
+      document.getElementById("errorMsg").textContent = "";
+    }
+
+    function collectItems() {
+      const rows = document.querySelectorAll(".row");
+      const items = [];
+
+      for (const row of rows) {
+        const title = row.querySelector(".title-input").value.trim();
+        const link = normalizeLink(row.querySelector(".link-input").value);
+
+        if (!title && !link) continue;
+
+        if (!title) throw new Error("One of your QR codes is missing a name/title.");
+        if (!isValidUrl(link)) throw new Error(`The link for \"${title}\" is not valid.`);
+
+        items.push({ title, link });
+      }
+
+      if (items.length === 0) throw new Error("Please enter at least one QR code name and link.");
+      return items;
+    }
+
+    function generateAllQR() {
+      const errorMsg = document.getElementById("errorMsg");
+      const previewGrid = document.getElementById("previewGrid");
+      const countPill = document.getElementById("countPill");
+
+      errorMsg.textContent = "";
+      previewGrid.innerHTML = "";
+      generatedItems = [];
+
+      try {
+        const items = collectItems();
+
+        items.forEach((item, index) => {
+          const card = document.createElement("div");
+          card.className = "qr-card";
+          card.innerHTML = `
+            <h3>${escapeHTML(item.title)}</h3>
+            <div class="qr-box" id="qrBox${index}"></div>
+          `;
+          previewGrid.appendChild(card);
+
+          new QRCode(document.getElementById(`qrBox${index}`), {
+            text: item.link,
+            width: 180,
+            height: 180,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+          });
+        });
+
+        setTimeout(() => {
+          generatedItems = items.map((item, index) => {
+            const qrBox = document.getElementById(`qrBox${index}`);
+            const img = qrBox.querySelector("img");
+            const canvas = qrBox.querySelector("canvas");
+            const src = img ? img.src : canvas.toDataURL("image/png");
+            return { ...item, src };
+          });
+        }, 100);
+
+        countPill.textContent = `${items.length} QR Code${items.length === 1 ? "" : "s"}`;
+      } catch (error) {
+        previewGrid.innerHTML = `<div class="empty">Your QR code previews will appear here</div>`;
+        countPill.textContent = "0 QR Codes";
+        errorMsg.textContent = error.message;
+      }
+    }
+
+    function printAllQR() {
+      const errorMsg = document.getElementById("errorMsg");
+
+      if (generatedItems.length === 0) {
+        generateAllQR();
+      }
+
+      setTimeout(() => {
+        if (generatedItems.length === 0) {
+          errorMsg.textContent = "Generate at least one QR code before printing.";
+          return;
+        }
+
+        const cardsHTML = generatedItems.map(item => `
+          <div class="print-card">
+            <h2>${escapeHTML(item.title)}</h2>
+            <img src="${item.src}" alt="QR Code for ${escapeHTML(item.title)}">
+          </div>
+        `).join("");
+
+        const printWindow = window.open("", "_blank", "width=900,height=700");
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>QR Code Print Sheet</title>
+            <style>
+              @page { size: letter; margin: 0.35in; }
+
+              html, body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background: white;
+                color: black;
+              }
+
+              .print-page {
+                min-height: calc(100vh - 0.7in);
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.35in;
+                align-content: center;
+                justify-content: center;
+              }
+
+              .print-card {
+                page-break-inside: avoid;
+                break-inside: avoid;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                min-height: 3.85in;
+                padding: 0.15in;
+                box-sizing: border-box;
+              }
+
+              h2 {
+                margin: 0 0 0.22in;
+                font-size: 22pt;
+                line-height: 1.1;
+                overflow-wrap: anywhere;
+                max-width: 3.4in;
+              }
+
+              img {
+                width: 2.45in;
+                height: 2.45in;
+                display: block;
+              }
+
+              @media print {
+                .print-card { page-break-inside: avoid; break-inside: avoid; }
+              }
+            </style>
+          </head>
+          <body>
+            <main class="print-page">
+              ${cardsHTML}
+            </main>
+            <script>
+              window.onload = function() {
+                window.focus();
+                window.print();
+              };
+            <\/script>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }, 150);
+    }
+
+    addRow();
+  </script>
+</body>
+</html>
